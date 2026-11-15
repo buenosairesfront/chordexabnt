@@ -73,7 +73,7 @@ local chord_intervals = {
 }
 local note_names = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"}
 -- movimiento: modos y velocidades (en negras por ciclo)
-local MOT_NAMES = {"OLA", "DERIVA", "RESPIRA", "PULSO", "GIRO", "MAREA"}
+local MOT_NAMES = {"WAVE", "DRIFT", "BREATHE", "PULSE", "SPIN", "TIDE"}
 local MOT_DIV = {0.25, 0.5, 1, 2, 4, 8, 16, 32, 64}
 local MOT_DIV_NAMES = {"1/16", "1/8", "1/4", "1/2", "1c", "2c", "4c", "8c", "16c"}
 local MOT_DEF_DIV = {7, 6, 5, 2, 5, 6}   -- velocidad que trae cada modo
@@ -85,7 +85,7 @@ local function strum_text(v)
 end
 -- intervalo del oscilador B (relación de frecuencia)
 local INT2 = {0.5, 1, 1.5, 2, 3, 4}
-local INT2_NAMES = {"-8va", "unisono", "+5a", "+8va", "+8va+5a", "+2 8vas"}
+local INT2_NAMES = {"-oct", "unison", "+5th", "+oct", "+oct+5th", "+2 oct"}
 -- tiempo del eco en negras
 local ECO_DIV = {0.5, 0.75, 1, 1.5, 2}
 local ECO_NAMES = {"1/8", "1/8.", "1/4", "1/4.", "1/2"}
@@ -495,9 +495,9 @@ end
 
 local function add_params()
   params:add_separator("chordex_abnt", "CHORDEX ABNT")
-  params:add_number("midi_channel", "canal MIDI (0=todos)", 0, 16, 1)
-  params:add_option("midi_clock_div", "divisor reloj MIDI", {"1x", "2x", "4x", "8x"}, 3)
-  params:add_option("fam", "familia", fam_names, 1)
+  params:add_number("midi_channel", "MIDI channel (0=all)", 0, 16, 1)
+  params:add_option("midi_clock_div", "MIDI clock divider", {"1x", "2x", "4x", "8x"}, 3)
+  params:add_option("fam", "family", fam_names, 1)
   params:set_action("fam", function(v)
     if not loading then
       -- LEAD entra monofónico con glide; las otras familias, polifónicas
@@ -509,66 +509,66 @@ local function add_params()
   params:set_action("preset", function()
     if not loading then load_preset() end
   end)
-  params:add_option("chord", "acorde", chord_types, 1)
+  params:add_option("chord", "chord", chord_types, 1)
   params:set_action("chord", function()
     if current_note then sound_chord(current_note) end
   end)
-  params:add_option("chord_on", "modo acorde", {"no", "sí"}, 2)
+  params:add_option("chord_on", "chord mode", {"no", "yes"}, 2)
   params:set_action("chord_on", function()
     if current_note and not loading then sound_chord(current_note) end
   end)
-  params:add_option("mono", "mono (lead)", {"no", "sí"}, 1)
-  params:add_separator("chordex_abnt_mov", "MOVIMIENTO")
-  params:add_option("mot_on", "movimiento", {"no", "sí"}, 1)
+  params:add_option("mono", "mono (lead)", {"no", "yes"}, 1)
+  params:add_separator("chordex_abnt_mov", "MOTION")
+  params:add_option("mot_on", "motion", {"no", "yes"}, 1)
   params:set_action("mot_on", function() send_motion() end)
-  params:add_option("mot_mode", "modo", MOT_NAMES, 1)
+  params:add_option("mot_mode", "mode", MOT_NAMES, 1)
   params:set_action("mot_mode", function(v)
     if not loading then params:set("mot_div", MOT_DEF_DIV[v]) end
     send_motion()
   end)
-  params:add_control("mot_depth", "profundidad", controlspec.new(0, 1, "lin", 0, 0.5, ""))
+  params:add_control("mot_depth", "depth", controlspec.new(0, 1, "lin", 0, 0.5, ""))
   params:set_action("mot_depth", function() send_motion() end)
-  params:add_option("mot_div", "velocidad", MOT_DIV_NAMES, 7)
+  params:add_option("mot_div", "rate", MOT_DIV_NAMES, 7)
   params:set_action("mot_div", function() send_motion() end)
   -- strum: división del pulso entre nota y nota; + de la primera nota a la
   -- última, - de la última a la primera, 0 = apagado
-  params:add_number("strum", "strum (división, +/- = sentido)", -#strum_div_names, #strum_div_names, 0,
+  params:add_number("strum", "strum (division, +/- = direction)", -#strum_div_names, #strum_div_names, 0,
     function(p) return strum_text(p:get()) end)
 
-  params:add_separator("chordex_abnt_osc", "OSCILADORES")
-  ctl("forma", "forma (sierra-triáng.)", 0, 0.5, 0.1, "", function(v) engine.forma(v) end)
+  params:add_separator("chordex_abnt_osc", "OSCILLATORS")
+  ctl("forma", "shape (saw-tri)", 0, 0.5, 0.1, "", function(v) engine.forma(v) end)
   ctl("osc2", "osc B", 0, 1, 0.3, "", function(v) engine.osc2(v) end)
-  params:add_option("int2", "intervalo osc B", INT2_NAMES, 4)
+  params:add_option("int2", "osc B interval", INT2_NAMES, 4)
   params:set_action("int2", function(v) engine.int2(INT2[v]) end)
   ctl("sub", "sub", 0, 1, 0.2, "", function(v) engine.sub(v) end)
-  ctl("det", "desafinación", 0, 1, 0.4, "", function(v) engine.det(v) end)
-  ctl("aire", "aire (ruido)", 0, 1, 0.05, "", function(v) engine.aire(v) end)
-  ctl("grano", "grano", 0, 1, 0, "", function(v) engine.grano(v) end)
+  ctl("det", "detune", 0, 1, 0.4, "", function(v) engine.det(v) end)
+  ctl("aire", "air (noise)", 0, 1, 0.05, "", function(v) engine.aire(v) end)
+  ctl("grano", "grain", 0, 1, 0, "", function(v) engine.grano(v) end)
   ctl("glide", "glide", 0, 1, 0, "s", function(v) engine.glide(v) end)
-  params:add_number("oct", "octava", -2, 2, 0)
-  ctl("bass", "bajo", 0, 1, 0.4, "", function(v) engine.bass(v) end)
+  params:add_number("oct", "octave", -2, 2, 0)
+  ctl("bass", "bass", 0, 1, 0.4, "", function(v) engine.bass(v) end)
 
-  params:add_separator("chordex_abnt_env", "ENVOLVENTE / FILTRO")
-  ctl("atk", "ataque", 0.001, 6, 0.4, "s", function(v) engine.atk(v) end)
+  params:add_separator("chordex_abnt_env", "ENVELOPE / FILTER")
+  ctl("atk", "attack", 0.001, 6, 0.4, "s", function(v) engine.atk(v) end)
   ctl("dec", "decay", 0.05, 6, 1.2, "s", function(v) engine.dec(v) end)
   ctl("sus", "sustain", 0, 1, 0.8, "", function(v) engine.sus(v) end)
   ctl("rel", "release", 0.02, 10, 2, "s", function(v) engine.rel(v) end)
   ctl("cut", "cutoff", 0, 1, 0.55, "", function(v) engine.cut(v) end)
-  ctl("res", "resonancia", 0, 1, 0.2, "", function(v) engine.res(v) end)
-  ctl("fenv", "env filtro", 0, 1, 0.2, "", function(v) engine.fenv(v) end)
-  ctl("mov", "movimiento (LFO)", 0, 1, 0.25, "", function(v) engine.mov(v) end)
-  ctl("movr", "velocidad LFO", 0.02, 8, 0.2, "Hz", function(v) engine.movr(v) end, "exp")
-  ctl("drive", "distorsión", 0, 1, 0.05, "", function(v) engine.drive(v) end)
+  ctl("res", "resonance", 0, 1, 0.2, "", function(v) engine.res(v) end)
+  ctl("fenv", "filter env", 0, 1, 0.2, "", function(v) engine.fenv(v) end)
+  ctl("mov", "movement (LFO)", 0, 1, 0.25, "", function(v) engine.mov(v) end)
+  ctl("movr", "LFO rate", 0.02, 8, 0.2, "Hz", function(v) engine.movr(v) end, "exp")
+  ctl("drive", "distortion", 0, 1, 0.05, "", function(v) engine.drive(v) end)
 
   params:add_separator("chordex_abnt_fx", "FX")
   ctl("chorus", "chorus", 0, 1, 0.4, "", function(v) engine.chorus(v) end)
-  ctl("eco", "eco", 0, 1, 0, "", function(v) engine.eco(v) end)
-  ctl("ecofb", "eco repeticiones", 0, 0.85, 0.5, "", function(v) engine.ecofb(v) end)
-  params:add_option("ecot_div", "eco tiempo", ECO_NAMES, 2)
+  ctl("eco", "echo", 0, 1, 0, "", function(v) engine.eco(v) end)
+  ctl("ecofb", "echo feedback", 0, 0.85, 0.5, "", function(v) engine.ecofb(v) end)
+  params:add_option("ecot_div", "echo time", ECO_NAMES, 2)
   params:set_action("ecot_div", function() eco_sent = 0; update_eco_time() end)
   ctl("shimmer", "shimmer", 0, 1, 0, "", function(v) engine.shimmer(v * v) end)
   ctl("space", "hall", 0, 0.8, 0.3, "", function(v) engine.space(v) end)
-  ctl("gain", "volumen", 0, 1.5, 1.0, "", function(v) engine.gain(v) end)
+  ctl("gain", "volume", 0, 1.5, 1.0, "", function(v) engine.gain(v) end)
 end
 
 -- ============================================================
